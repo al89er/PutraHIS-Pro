@@ -16,32 +16,34 @@
     'use strict';
 
     // ====== BOT TOKEN SECURITY CONFIG ======
-    let TELEGRAM_BOT_TOKEN = GM_getValue('TELEGRAM_BOT_TOKEN', '');
+//    let TELEGRAM_BOT_TOKEN = GM_getValue('TELEGRAM_BOT_TOKEN', '');
 
-    if (!TELEGRAM_BOT_TOKEN) {
-        const input = prompt('Please enter your Telegram Bot Token for RESQ Script:', '');
-        if (input) {
-            TELEGRAM_BOT_TOKEN = input.trim();
-            GM_setValue('TELEGRAM_BOT_TOKEN', TELEGRAM_BOT_TOKEN);
-        } else {
-            console.warn('Telegram Bot Token missing. Bot listener processes disabled.');
-        }
-    }
+//    if (!TELEGRAM_BOT_TOKEN) {
+//        const input = prompt('Please enter your Telegram Bot Token for RESQ Script:', '');
+//        if (input) {
+//            TELEGRAM_BOT_TOKEN = input.trim();
+//            GM_setValue('TELEGRAM_BOT_TOKEN', TELEGRAM_BOT_TOKEN);
+//        } else {
+//            console.warn('Telegram Bot Token missing. Bot listener processes disabled.');
+//        }
+//    }
 
-    GM_registerMenuCommand('Change Telegram Bot Token', () => {
-        const current = GM_getValue('TELEGRAM_BOT_TOKEN', '');
-        const input = prompt('Enter new Telegram Bot Token:', current);
-        if (input !== null) {
-            GM_setValue('TELEGRAM_BOT_TOKEN', input.trim());
-            location.reload();
-        }
-    });
+//    GM_registerMenuCommand('Change Telegram Bot Token', () => {
+//        const current = GM_getValue('TELEGRAM_BOT_TOKEN', '');
+//        const input = prompt('Enter new Telegram Bot Token:', current);
+//        if (input !== null) {
+//            GM_setValue('TELEGRAM_BOT_TOKEN', input.trim());
+//            location.reload();
+//        }
+//    });
 
     // ====== SUPABASE CONFIGURATION ======
     const SUPABASE_URL = 'https://pvbbdmlyueodfzqvywfv.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2YmJkbWx5dWVvZGZ6cXZ5d2Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MzkyNjEsImV4cCI6MjA5OTExNTI2MX0.A1dSapE7481_5L-IHCBcEG-qF-xhxzMRBdO3A4Yd3NM';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let TELEGRAM_BOT_TOKEN = null; //
 
     const myComputerId = 'pc_' + Math.random().toString(36).substring(2, 9);
     let supabaseCache = null;
@@ -391,8 +393,14 @@
         if (!headerContainer) return setTimeout(beginHandshakeInitialization, 200);
 
         try {
-            const { data } = await supabaseClient.from('hospital_live_state').select().eq('id', 1).single();
-            supabaseCache = data;
+            // Fetch BOTH the live stats and the secret bot token in parallel!
+            const [stateResponse, configResponse] = await Promise.all([
+                supabaseClient.from('hospital_live_state').select().eq('id', 1).single(),
+                supabaseClient.from('app_config').select('telegram_bot_token').eq('id', 1).single()
+            ]);
+
+            supabaseCache = stateResponse.data;
+            TELEGRAM_BOT_TOKEN = configResponse.data.telegram_bot_token;
             
             updatePanelUI({
                 green: { seen: data.green_seen, total: data.green_total, over4h: data.green_over4h, over6h: data.green_over6h },
