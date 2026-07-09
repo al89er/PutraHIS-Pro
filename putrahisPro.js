@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UPM RESQ Full Panel + Telegram Multi-User + Overdue Breakdown (Supabase Realtime Hub)
 // @namespace    http://tampermonkey.net/
-// @version      4.8
+// @version      4.8.1
 // @description  Site-wide persistent navbar capsule + Anti-Ping-Pong State Lock + Telegram Bot management.
 // @match        https://putrahis.hsaas.upm.edu.my/*
 // @grant        GM_setValue
